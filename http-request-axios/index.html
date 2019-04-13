@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Http request</title>
+  </head>
+  <body>
+    <script src="https://unpkg.com/react@16.3.0/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16.3.0/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+    <script src="https://unpkg.com/axios@0.16.2/dist/axios.min.js"></script>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      class UserLocation extends React.Component {
+        state = { location: undefined, loaded: false };
+        fetchLocation = () => {
+          axios({
+            url: "https://api.github.com/graphql",
+            method: "post",
+            data: {
+              query: `{
+                user(login: "${this.props.username}") {
+                    location
+          }
+        }`
+            },
+            headers: {
+              Authorization: `bearer f37af11e841397ce42d5ef8006a626fcf897d10e`
+            }
+          }).then(
+            response => {
+              this.setState({
+                loaded: true,
+                location: response.data.data.user.location
+              });
+            },
+            error => {
+              this.setState({
+                error,
+                loaded: true
+              });
+            }
+          );
+        };
+        componentDidMount() {
+          this.fetchLocation();
+        }
+        componentDidUpdate(prevProps) {
+          if (prevProps.username !== this.props.username) {
+            this.fetchLocation();
+          }
+        }
+        render() {
+          return this.state.loaded
+            ? this.state.error
+              ? "ERROR (You probably need to add your own token)"
+              : this.state.location || "Unknown"
+            : "...";
+        }
+      }
+      class App extends React.Component {
+        state = { username: "kentcdodds" };
+        handleSubmit = e => {
+          e.preventDefault();
+          this.setState({
+            username: this.inputNode.value
+          });
+        };
+        render() {
+          const { username } = this.state;
+          const element = (
+            <div>
+              <div>
+                {`@ ${username} lives in `}
+                <UserLocation username={username} />
+              </div>
+            </div>
+          );
+          return <div>{element}</div>;
+        }
+      }
+      ReactDOM.render(<App />, document.getElementById("root"));
+    </script>
+  </body>
+</html>
